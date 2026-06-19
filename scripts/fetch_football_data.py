@@ -45,7 +45,7 @@ class FootballDataFetcher:
             
             return matches
         except Exception as e:
-            print(f"❌ 获取比赛数据失败: {e}")
+            print(f"[错误] 获取比赛数据失败: {e}")
             # 如果API失败，返回空列表
             return []
     
@@ -224,7 +224,7 @@ def main():
     """主函数 - 获取所有足球数据"""
     
     print("=" * 60)
-    print("🏈 足球数据获取工具 (免费API版)")
+    print("[足球数据获取工具] (免费API版)")
     print("=" * 60)
     print(f"数据源: {FootballDataFetcher().base_url}")
     
@@ -252,8 +252,8 @@ def main():
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     
-    print(f"\n✅ 数据已保存到: {output_file}")
-    print(f"\n📊 数据统计:")
+    print(f"\n[OK] 数据已保存到: {output_file}")
+    print(f"\n数据统计:")
     print(f"  - 总比赛数: {len(data['all_matches'])} 场")
     print(f"  - 今日比赛: {len(data['today_matches'])} 场")
     print(f"  - 近期比赛: {len(data['upcoming_matches'])} 场")
@@ -261,13 +261,13 @@ def main():
     
     # 打印今日比赛
     if data["today_matches"]:
-        print(f"\n📅 今日比赛:")
+        print(f"\n今日比赛:")
         for match in data["today_matches"]:
             print(f"  {match['date']} {match['time']} | {match['home_team']} vs {match['away_team']} [{match['stage']}] @ {match['venue']}")
     
     # 打印近期比赛
     if data["upcoming_matches"]:
-        print(f"\n📅 近期比赛 (未来7天):")
+        print(f"\n近期比赛 (未来7天):")
         for match in data["upcoming_matches"][:5]:
             print(f"  {match['date']} {match['time']} | {match['home_team']} vs {match['away_team']} [{match['stage']}]")
     

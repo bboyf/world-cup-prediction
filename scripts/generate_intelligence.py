@@ -277,19 +277,19 @@ def main():
     """主函数"""
     
     print("=" * 60)
-    print("🤖 AI情报生成工具")
+    print("[AI情报生成工具]")
     print("=" * 60)
     
     # 检查 API Key
     api_key = os.environ.get("DEEPSEEK_API_KEY")
     if not api_key:
-        print("❌ 错误：未设置 DEEPSEEK_API_KEY 环境变量")
+        print("[错误] 未设置 DEEPSEEK_API_KEY 环境变量")
         print("\n请设置环境变量：")
         print("  Linux/macOS: export DEEPSEEK_API_KEY='你的密钥'")
         print("  Windows: $env:DEEPSEEK_API_KEY='你的密钥'")
         return None
     
-    print(f"✅ API Key 已配置")
+    print(f"[OK] API Key 已配置")
     
     # 获取足球数据
     # 确保环境变量不是空字符串
@@ -307,12 +307,12 @@ def main():
         try:
             with open(data_file_path, "r", encoding="utf-8") as f:
                 football_data = json.load(f)
-            print(f"✅ 足球数据已加载: {football_data_file}")
+            print(f"[OK] 足球数据已加载: {football_data_file}")
         except Exception as e:
-            print(f"⚠️ 读取足球数据文件失败: {e}")
+            print(f"[警告] 读取足球数据文件失败: {e}")
             print("   将使用空数据进行生成")
     else:
-        print(f"⚠️ 未找到足球数据文件: {football_data_file}")
+        print(f"[警告] 未找到足球数据文件: {football_data_file}")
         print("   将使用空数据进行生成")
     
     # 生成情报
@@ -325,8 +325,8 @@ def main():
         with open(output_file, "w", encoding="utf-8") as f:
             f.write(intelligence)
         
-        print(f"\n✅ 情报已保存到: {output_file}")
-        print(f"\n📄 生成的情报内容:")
+        print(f"\n[OK] 情报已保存到: {output_file}")
+        print(f"\n生成的情报内容:")
         print("-" * 60)
         print(intelligence)
         print("-" * 60)
@@ -334,7 +334,7 @@ def main():
         return intelligence
         
     except Exception as e:
-        print(f"\n❌ 生成失败: {e}")
+        print(f"\n[错误] 生成失败: {e}")
         return None
 
 if __name__ == "__main__":
