@@ -8,8 +8,12 @@ import re
 from pathlib import Path
 from datetime import datetime
 
-def update_skill_md():
-    """更新 skill.md 的第六节"""
+def update_skill_md(skill_file_path=None):
+    """更新 skill.md 的第六节
+    
+    Args:
+        skill_file_path: skill.md 文件的路径，如果为None则自动查找
+    """
     
     print("=" * 60)
     print("📝 Skill.md 更新工具")
@@ -29,16 +33,26 @@ def update_skill_md():
     print(f"✅ 已读取情报文件: {intelligence_file}")
     
     # 读取 skill.md
-    skill_file = Path("skill.md")
+    if skill_file_path is None:
+        skill_file_path = find_skill_md()
     
-    if not skill_file.exists():
+    if not skill_file_path:
         print("❌ 错误：未找到 skill.md 文件")
         return False
     
-    with open(skill_file, "r", encoding="utf-8") as f:
-        content = f.read()
+    skill_file = Path(skill_file_path)
     
-    print(f"✅ 已读取文件: {skill_file}")
+    if not skill_file.exists():
+        print(f"❌ 错误：skill.md 文件不存在: {skill_file}")
+        return False
+    
+    try:
+        with open(skill_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        print(f"✅ 已读取文件: {skill_file}")
+    except Exception as e:
+        print(f"❌ 读取文件失败: {e}")
+        return False
     
     # 查找第六节的位置
     section_6_start_marker = "## 六、最新情报（每日更新区）"
@@ -98,6 +112,22 @@ def update_skill_md():
     
     return True
 
+def find_skill_md():
+    """查找 skill.md 文件的位置"""
+    # 可能的文件位置（按优先级排序）
+    possible_paths = [
+        Path("skill.md"),                              # 根目录
+        Path("worldcup2026-prediction-skill/skill.md"),  # 子目录
+        Path("../worldcup2026-prediction-skill/skill.md"),  # 父目录的子目录
+    ]
+    
+    for path in possible_paths:
+        if path.exists() and path.is_file():
+            print(f"✅ 找到 skill.md: {path}")
+            return path
+    
+    return None
+
 def validate_skill_md():
     """验证 skill.md 的格式"""
     
@@ -105,14 +135,22 @@ def validate_skill_md():
     print("🔍 验证 skill.md")
     print("=" * 60)
     
-    skill_file = Path("skill.md")
+    # 查找 skill.md 文件
+    skill_file = find_skill_md()
     
-    if not skill_file.exists():
-        print("❌ 错误：skill.md 文件不存在")
+    if not skill_file:
+        print("❌ 错误：未找到 skill.md 文件")
+        print("   查找了以下位置：")
+        print("   - skill.md")
+        print("   - worldcup2026-prediction-skill/skill.md")
         return False
     
-    with open(skill_file, "r", encoding="utf-8") as f:
-        content = f.read()
+    try:
+        with open(skill_file, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as e:
+        print(f"❌ 读取文件失败: {e}")
+        return False
     
     # 检查必要的章节
     sections = [
@@ -137,19 +175,35 @@ def validate_skill_md():
     else:
         print("\n⚠️ 警告：部分章节缺失")
     
-    return all_found
+    return all_found, skill_file
 
 def main():
     """主函数"""
     
-    # 验证文件
-    if not validate_skill_md():
+    # 验证文件（获取文件路径）
+    validation_result = validate_skill_md()
+    
+    # 处理不同的返回情况
+    if validation_result is False:
         print("\n❌ 验证失败，终止更新")
         return False
+    elif isinstance(validation_result, tuple):
+        is_valid, skill_file = validation_result
+        if not is_valid:
+            print("\n❌ 验证失败，终止更新")
+            return False
+    else:
+        # 如果只返回布尔值，使用默认路径
+        skill_file = find_skill_md()
+        if not skill_file:
+            print("\n❌ 找不到 skill.md 文件，终止更新")
+            return False
+    
+    print(f"\n将更新文件: {skill_file}")
     
     # 更新文件
     print()
-    success = update_skill_md()
+    success = update_skill_md(skill_file)
     
     if success:
         print("\n" + "=" * 60)
