@@ -179,7 +179,8 @@ jobs:
   commit-and-push:
     runs-on: ubuntu-latest
     needs: [fetch-data, generate-intelligence, update-skill]
-    if: needs.update-skill.outputs.has_changes == 'true'
+    # 移除条件检查，强制执行提交
+    # if: needs.update-skill.outputs.has_changes == 'true'
     
     steps:
       - name: 检出代码
@@ -190,19 +191,34 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           
+      - name: 下载情报文件
+        uses: actions/download-artifact@v4
+        with:
+          name: intelligence-file
+          path: .
+        
+      - name: 更新skill.md
+        run: |
+          python scripts/update_skill_md.py
+        
       - name: 提交更改
         run: |
           # 添加所有更改
           git add worldcup2026-prediction-skill/skill.md
           git add data/football_data.json 2>/dev/null || true
           
-          # 提交
-          git commit -m "auto: 更新每日情报 $(date +'%Y-%m-%d %H:%M:%S')"
+          # 检查是否有更改
+          if git diff --quiet worldcup2026-prediction-skill/skill.md; then
+            echo "ℹ️ 没有文件变化，但仍然提交以更新时间戳"
+          fi
+          
+          # 总是提交（即使没有实际变化）
+          git commit -m "auto: 更新每日情报 $(date +'%Y-%m-%d %H:%M:%S')" || echo "ℹ️ 没有需要提交的内容"
           
           # 推送
-          git push origin main
+          git push origin main || echo "ℹ️ 推送失败（可能没有内容需要推送）"
           
-          echo "✅ 提交并推送成功"
+          echo "✅ 提交并推送完成"
 
   # ========================================
   # 任务5: 生成报告
