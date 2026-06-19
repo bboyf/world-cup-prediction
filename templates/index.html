@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026世界杯AI预测引擎</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1>⚽ 2026世界杯AI预测引擎</h1>
+            <p class="subtitle">基于DeepSeek AI的智能比赛预测系统</p>
+        </header>
+
+        <!-- 预测表单 -->
+        <section class="predict-form">
+            <div class="form-group">
+                <label for="teamA">主队</label>
+                <input type="text" id="teamA" placeholder="例如：墨西哥" list="teamList">
+            </div>
+            
+            <div class="vs-badge">VS</div>
+            
+            <div class="form-group">
+                <label for="teamB">客队</label>
+                <input type="text" id="teamB" placeholder="例如：南非" list="teamList">
+            </div>
+            
+            <div class="form-group">
+                <label for="stage">比赛阶段</label>
+                <select id="stage">
+                    <option value="小组赛">小组赛</option>
+                    <option value="16强">16强</option>
+                    <option value="8强">8强</option>
+                    <option value="半决赛">半决赛</option>
+                    <option value="决赛">决赛</option>
+                </select>
+            </div>
+            
+            <button id="predictBtn" class="btn-predict">开始预测</button>
+        </section>
+
+        <!-- 预测结果展示区 -->
+        <section id="resultSection" class="result-section" style="display: none;">
+            <!-- 结果头部 -->
+            <div class="result-header">
+                <h2 id="matchTitle">预测结果</h2>
+            </div>
+
+            <!-- 主要结果卡片 -->
+            <div class="result-cards">
+                <!-- 比分预测 -->
+                <div class="result-card score-card">
+                    <h3>预测比分</h3>
+                    <div class="score-display" id="predictedScore">-</div>
+                    <div class="confidence-badge" id="confidence">-</div>
+                </div>
+
+                <!-- 胜率预测 -->
+                <div class="result-card probability-card">
+                    <h3>胜平负概率</h3>
+                    <div class="probability-bars">
+                        <div class="prob-item">
+                            <div class="team-name" id="teamAName">-</div>
+                            <div class="prob-bar">
+                                <div class="prob-fill" id="teamAProbBar"></div>
+                            </div>
+                            <div class="prob-value" id="teamAProb">-</div>
+                        </div>
+                        <div class="prob-item">
+                            <div class="team-name">平局</div>
+                            <div class="prob-bar">
+                                <div class="prob-fill draw" id="drawProbBar"></div>
+                            </div>
+                            <div class="prob-value" id="drawProb">-</div>
+                        </div>
+                        <div class="prob-item">
+                            <div class="team-name" id="teamBName">-</div>
+                            <div class="prob-bar">
+                                <div class="prob-fill" id="teamBProbBar"></div>
+                            </div>
+                            <div class="prob-value" id="teamBProb">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关键球员 -->
+                <div class="result-card players-card">
+                    <h3>关键球员</h3>
+                    <div class="players-list" id="playersList">
+                        <!-- 由JS动态生成 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 详细分析 -->
+            <div class="analysis-section">
+                <h3>详细分析</h3>
+                
+                <!-- 关键因素 -->
+                <div class="factor-card">
+                    <h4>关键因素</h4>
+                    <ul id="keyFactors" class="factor-list">
+                        <!-- 由JS动态生成 -->
+                    </ul>
+                </div>
+
+                <!-- 综合分析 -->
+                <div class="analysis-card">
+                    <h4>综合分析</h4>
+                    <p id="analysisText">-</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 加载状态 -->
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>AI正在分析中...</p>
+        </div>
+
+        <!-- 错误提示 -->
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+
+        <!-- 底部信息 -->
+        <footer class="footer">
+            <p>本工具仅供娱乐和球迷讨论使用 | 严禁用于任何投注、博彩活动</p>
+            <p>Powered by DeepSeek AI | 2026 FIFA World Cup</p>
+        </footer>
+    </div>
+
+    <!-- 球队列表（用于自动补全） -->
+    <datalist id="teamList">
+        <option value="阿根廷">
+        <option value="西班牙">
+        <option value="法国">
+        <option value="英格兰">
+        <option value="巴西">
+        <option value="德国">
+        <option value="葡萄牙">
+        <option value="荷兰">
+        <option value="乌拉圭">
+        <option value="克罗地亚">
+        <option value="摩洛哥">
+        <option value="哥伦比亚">
+        <option value="日本">
+        <option value="挪威">
+        <option value="美国">
+        <option value="墨西哥">
+        <option value="加拿大">
+        <option value="瑞士">
+        <option value="韩国">
+        <option value="比利时">
+        <option value="塞内加尔">
+        <option value="捷克">
+        <option value="波黑">
+        <option value="卡塔尔">
+        <option value="巴拉圭">
+        <option value="科特迪瓦">
+        <option value="突尼斯">
+        <option value="伊朗">
+        <option value="新西兰">
+        <option value="沙特">
+        <option value="阿尔及利亚">
+        <option value="加纳">
+        <option value="巴拿马">
+        <option value="伊拉克">
+        <option value="乌兹别克斯坦">
+        <option value="约旦">
+        <option value="南非">
+        <option value="海地">
+        <option value="库拉索">
+        <option value="佛得角">
+        <option value="刚果金">
+        <option value="埃及">
+        <option value="澳大利亚">
+        <option value="土耳其">
+        <option value="瑞典">
+        <option value="奥地利">
+        <option value="苏格兰">
+        <option value="厄瓜多尔">
+    </datalist>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

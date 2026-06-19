@@ -1,0 +1,83 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# 配置文件（敏感信息，不上传）
+config.ini
+config.yaml
+.env
+*.local
+secrets.json
+
+# 日志
+*.log
+logs/
+
+# 临时文件
+temp/
+tmp/
+.cache/
+
+# 情报文件（由自动化生成）
+intelligence.md
+data/football_data.json
+*.backup
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Git 仓库（不包括当前仓库）
+worldcup2026-prediction-skill/.git

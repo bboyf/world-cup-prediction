@@ -1,0 +1,213 @@
+name: 每日情报自动更新
+
+on:
+  # 定时执行：每天早上8点（北京时间16:00 UTC）
+  schedule:
+    - cron: '0 16 * * *'
+  
+  # 支持手动触发
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '执行模式'
+        required: false
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - force
+          - dry-run
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  # ========================================
+  # 任务1: 获取足球数据
+  # ========================================
+  fetch-data:
+    runs-on: ubuntu-latest
+    outputs:
+      data_status: ${{ steps.fetch.outputs.status }}
+      data_file: ${{ steps.fetch.outputs.data_file }}
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Python环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: 安装依赖
+        run: |
+          pip install requests pyyaml python-dotenv
+        
+      - name: 获取足球数据
+        id: fetch
+        run: |
+          python scripts/fetch_football_data.py
+        env:
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        continue-on-error: true
+        
+      - name: 检查数据文件
+        run: |
+          if [ -f "data/football_data.json" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "data_file=data/football_data.json" >> $GITHUB_OUTPUT
+            echo "✅ 数据获取成功"
+            cat data/football_data.json
+          else
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "data_file=" >> $GITHUB_OUTPUT
+            echo "⚠️ 跳过数据获取步骤"
+          fi
+
+  # ========================================
+  # 任务2: AI生成每日情报
+  # ========================================
+  generate-intelligence:
+    runs-on: ubuntu-latest
+    needs: fetch-data
+    outputs:
+      intelligence_file: ${{ steps.generate.outputs.file }}
+      generation_status: ${{ steps.generate.outputs.status }}
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 设置Python环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: 安装依赖
+        run: |
+          pip install openai pyyaml python-dotenv
+          
+      - name: 生成每日情报
+        id: generate
+        run: |
+          python scripts/generate_intelligence.py
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          FOOTBALL_DATA_FILE: ${{ needs.fetch-data.outputs.data_file }}
+          
+      - name: 检查情报文件
+        run: |
+          if [ -f "intelligence.md" ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "file=intelligence.md" >> $GITHUB_OUTPUT
+            echo "✅ 情报生成成功"
+            echo "---情报内容---"
+            cat intelligence.md
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "file=" >> $GITHUB_OUTPUT
+            echo "❌ 情报生成失败"
+            exit 1
+          fi
+
+  # ========================================
+  # 任务3: 更新skill.md
+  # ========================================
+  update-skill:
+    runs-on: ubuntu-latest
+    needs: generate-intelligence
+    outputs:
+      update_status: ${{ steps.update.outputs.status }}
+      has_changes: ${{ steps.update.outputs.has_changes }}
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 更新skill.md
+        id: update
+        run: |
+          python scripts/update_skill_md.py
+        continue-on-error: false
+        
+      - name: 检查更改
+        id: check_changes
+        run: |
+          # 检查是否有更改
+          if git diff --quiet skill.md; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "status=unchanged" >> $GITHUB_OUTPUT
+            echo "ℹ️ skill.md 没有需要更新的内容"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "status=updated" >> $GITHUB_OUTPUT
+            echo "✅ skill.md 已更新"
+            echo "---更改内容---"
+            git diff skill.md
+          fi
+
+  # ========================================
+  # 任务4: 提交并推送
+  # ========================================
+  commit-and-push:
+    runs-on: ubuntu-latest
+    needs: [fetch-data, generate-intelligence, update-skill]
+    if: needs.update-skill.outputs.has_changes == 'true'
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        
+      - name: 配置Git
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+      - name: 提交更改
+        run: |
+          # 添加所有更改
+          git add skill.md
+          git add data/football_data.json 2>/dev/null || true
+          
+          # 提交
+          git commit -m "auto: 更新每日情报 $(date +'%Y-%m-%d %H:%M:%S')"
+          
+          # 推送
+          git push origin main
+          
+          echo "✅ 提交并推送成功"
+
+  # ========================================
+  # 任务5: 生成报告
+  # ========================================
+  report:
+    runs-on: ubuntu-latest
+    needs: [fetch-data, generate-intelligence, update-skill, commit-and-push]
+    if: always()
+    
+    steps:
+      - name: 生成执行报告
+        run: |
+          echo "========================================"
+          echo "每日情报更新 - 执行报告"
+          echo "========================================"
+          echo "执行时间: $(date +'%Y-%m-%d %H:%M:%S')"
+          echo "----------------------------------------"
+          echo "数据获取: ${{ needs.fetch-data.outputs.data_status }}"
+          echo "情报生成: ${{ needs.generate-intelligence.outputs.generation_status }}"
+          echo "文件更新: ${{ needs.update-skill.outputs.update_status }}"
+          echo "提交推送: ${{ needs.commit-and-push.result }}"
+          echo "----------------------------------------"
+          
+          if [ "${{ needs.commit-and-push.result }}" == "skipped" ]; then
+            echo "状态: ℹ️ 无需更新（情报未变化）"
+          elif [ "${{ needs.commit-and-push.result }}" == "success" ]; then
+            echo "状态: ✅ 更新成功"
+          else
+            echo "状态: ⚠️ 更新完成（可能存在警告）"
+          fi
+          
+          echo "========================================"

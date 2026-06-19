@@ -1,0 +1,48 @@
+# 2026世界杯AI预测引擎 - YAML配置文件模板
+# 请复制此文件为 config.yaml，并填写实际值
+
+api:
+  deepseek:
+    # DeepSeek API 配置
+    api_key: "sk-your-deepseek-api-key-here"
+    base_url: "https://api.deepseek.com/v1"
+    model: "deepseek-v4-pro"
+  
+  football:
+    # Football-Data API 配置（可选）
+    api_key: "your-football-data-api-key-here"
+
+github:
+  # GitHub Actions 会自动配置
+  token: "${{ secrets.GITHUB_TOKEN }}"
+  repository: "${{ github.repository }}"
+
+update:
+  # 更新计划配置
+  schedule:
+    time: "08:00"        # 每天执行时间（北京时间）
+    timezone: "Asia/Shanghai"
+    enabled: true
+  
+  # 数据源配置
+  data_sources:
+    - name: "FIFA官方"
+      enabled: true
+    - name: "ESPN"
+      enabled: true
+    - name: "BBC Sport"
+      enabled: true
+
+prediction:
+  # 预测配置
+  temperature: 0.7
+  max_tokens: 2000
+  default_stage: "小组赛"
+  
+  # 约束配置
+  max_win_probability: 85
+  min_probability: 0
+  confidence_levels:
+    - "高"
+    - "中"
+    - "低"
