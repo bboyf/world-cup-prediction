@@ -1,0 +1,8 @@
+# Docker部署环境变量配置示例
+# 复制此文件为 .env 并填入实际值
+
+# DeepSeek API密钥（必需）
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key-here
+
+# Football-Data API密钥（可选）
+FOOTBALL_API_KEY=your-football-data-api-key-here
