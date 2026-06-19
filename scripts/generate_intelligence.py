@@ -292,13 +292,25 @@ def main():
     print(f"✅ API Key 已配置")
     
     # 获取足球数据
-    football_data_file = os.environ.get("FOOTBALL_DATA_FILE", "data/football_data.json")
+    # 确保环境变量不是空字符串
+    football_data_file = os.environ.get("FOOTBALL_DATA_FILE", "")
+    
+    # 如果环境变量为空，使用默认路径
+    if not football_data_file:
+        football_data_file = "data/football_data.json"
+    
     football_data = None
     
-    if Path(football_data_file).exists():
-        with open(football_data_file, "r", encoding="utf-8") as f:
-            football_data = json.load(f)
-        print(f"✅ 足球数据已加载: {football_data_file}")
+    # 检查文件是否存在
+    data_file_path = Path(football_data_file)
+    if data_file_path.exists() and data_file_path.is_file():
+        try:
+            with open(data_file_path, "r", encoding="utf-8") as f:
+                football_data = json.load(f)
+            print(f"✅ 足球数据已加载: {football_data_file}")
+        except Exception as e:
+            print(f"⚠️ 读取足球数据文件失败: {e}")
+            print("   将使用空数据进行生成")
     else:
         print(f"⚠️ 未找到足球数据文件: {football_data_file}")
         print("   将使用空数据进行生成")
