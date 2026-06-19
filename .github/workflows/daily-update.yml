@@ -112,6 +112,13 @@ jobs:
             echo "❌ 情报生成失败"
             exit 1
           fi
+      
+      - name: 上传情报文件
+        uses: actions/upload-artifact@v4
+        with:
+          name: intelligence-file
+          path: intelligence.md
+          retention-days: 1
 
   # ========================================
   # 任务3: 更新skill.md
@@ -127,6 +134,23 @@ jobs:
       - name: 检出代码
         uses: actions/checkout@v4
         
+      - name: 下载情报文件
+        uses: actions/download-artifact@v4
+        with:
+          name: intelligence-file
+          path: .
+        
+      - name: 检查情报文件
+        run: |
+          if [ -f "intelligence.md" ]; then
+            echo "✅ 情报文件已下载"
+            echo "---情报内容---"
+            cat intelligence.md
+          else
+            echo "❌ 情报文件下载失败"
+            exit 1
+          fi
+        
       - name: 更新skill.md
         id: update
         run: |
@@ -137,7 +161,7 @@ jobs:
         id: check_changes
         run: |
           # 检查是否有更改
-          if git diff --quiet skill.md; then
+          if git diff --quiet worldcup2026-prediction-skill/skill.md; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "status=unchanged" >> $GITHUB_OUTPUT
             echo "ℹ️ skill.md 没有需要更新的内容"
@@ -146,7 +170,7 @@ jobs:
             echo "status=updated" >> $GITHUB_OUTPUT
             echo "✅ skill.md 已更新"
             echo "---更改内容---"
-            git diff skill.md
+            git diff worldcup2026-prediction-skill/skill.md
           fi
 
   # ========================================
@@ -169,7 +193,7 @@ jobs:
       - name: 提交更改
         run: |
           # 添加所有更改
-          git add skill.md
+          git add worldcup2026-prediction-skill/skill.md
           git add data/football_data.json 2>/dev/null || true
           
           # 提交
