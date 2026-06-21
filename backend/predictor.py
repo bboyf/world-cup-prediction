@@ -5,12 +5,13 @@
 """
 
 import json
+import os
 import openai
 from pathlib import Path
 from typing import Dict
 
-# DeepSeek API配置
-API_KEY = "sk-3c560b18e0eb4feebea7c50977925669"  # DeepSeek API Key
+# DeepSeek API配置（从环境变量读取，不要硬编码 Key）
+API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 API_BASE = "https://api.deepseek.com/v1"
 MODEL = "deepseek-v4-pro"
 

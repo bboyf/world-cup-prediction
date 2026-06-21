@@ -2,6 +2,10 @@
 """
 FastAPI 主程序
 2026世界杯AI预测引擎 - Web服务
+
+
+
+
 """
 
 import sys

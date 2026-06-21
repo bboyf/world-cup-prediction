@@ -15,11 +15,10 @@ import openai
 from pathlib import Path
 
 # ==================== 配置区域 ====================
-# 方式1：直接在这里填入你的API Key（安全性较低，仅测试用）
-API_KEY = "sk-3c560b18e0eb4feebea7c50977925669"  # DeepSeek API Key
-
-# 方式2：从环境变量读取（推荐，更加安全）
-# API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
+# 从环境变量读取 API Key（推荐方式）
+# Windows PowerShell: $env:DEEPSEEK_API_KEY='你的密钥'
+# macOS/Linux: export DEEPSEEK_API_KEY='你的密钥'
+API_KEY = os.environ.get("DEEPSEEK_API_KEY", "")
 
 # DeepSeek API配置
 API_BASE = "https://api.deepseek.com/v1"
