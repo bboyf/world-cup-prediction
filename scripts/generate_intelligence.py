@@ -230,10 +230,7 @@ class IntelligenceGenerator:
 【近期结果】
 {results if results else "暂无近期比赛结果"}
 
-请生成符合以下格式的情报文本：
-
----
-## 六、最新情报（每日更新区）
+请生成符合以下格式的情报文本（不要输出 "## 六、最新情报" 这个章节标题）：
 
 > 本节由每日情报流程覆盖更新。**当本节与第四节冲突时，以本节为准**（本节更新）。
 
@@ -329,12 +326,8 @@ class IntelligenceGenerator:
         matches = football_data.get("matches", [])
         team_status = football_data.get("team_status", [])
         
-        # 构建简单情报
-        intelligence = f"""---
-
-## 六、最新情报（每日更新区）
-
-> 本节由每日情报流程覆盖更新。**当本节与第四节冲突时，以本节为准**（本节更新）。
+        # 构建简单情报（不输出章节标题，由 update_skill_md.py 统一拼接）
+        intelligence = f"""> 本节由每日情报流程覆盖更新。**当本节与第四节冲突时，以本节为准**（本节更新）。
 
 **情报日期：{current_date}**
 

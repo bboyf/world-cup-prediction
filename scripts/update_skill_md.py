@@ -28,9 +28,23 @@ def update_skill_md(skill_file_path=None):
         return False
     
     with open(intelligence_file, "r", encoding="utf-8") as f:
-        new_section = f.read()
-    
-    print(f"[OK] 已读取情报文件: {intelligence_file}")
+        raw_section = f.read()
+
+    # 剥离 intelligence.md 中可能自带的章节标题和前置分隔符。
+    # generate_intelligence.py 的输出有时会包含 "## 六、最新情报（每日更新区）"，
+    # 而 update_skill_md 本身也会拼接这个标题，会导致双标题和内容错位。
+    new_section = raw_section
+    section_header = "## 六、最新情报（每日更新区）"
+    if section_header in new_section:
+        # 取标题之后的所有内容作为纯净的情报正文
+        idx = new_section.index(section_header)
+        new_section = new_section[idx + len(section_header):]
+    # 去掉开头的空白行和 --- 分隔符
+    new_section = new_section.strip()
+    while new_section.startswith("---"):
+        new_section = new_section[3:].strip()
+
+    print(f"[OK] 已读取情报文件: {intelligence_file} (剥离标题后 {len(new_section)} 字符)")
     
     # 读取 skill.md
     if skill_file_path is None:
@@ -90,7 +104,7 @@ def update_skill_md(skill_file_path=None):
         part_after_section_6 = ""
     
     # 构建新内容
-    new_content = part_before_section_6 + section_6_start_marker + new_section + part_after_section_6
+    new_content = part_before_section_6 + section_6_start_marker + "\n\n" + new_section + part_after_section_6
     
     # 写回文件
     with open(skill_file, "w", encoding="utf-8") as f:
