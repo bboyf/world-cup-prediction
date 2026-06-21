@@ -6,9 +6,95 @@
 
 import os
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Any
+
+
+def resolve_data_file_path(configured_path: str) -> Path:
+    """解析足球数据文件路径。
+
+    这里不能只依赖当前工作目录，因为脚本既可能在项目根目录执行，
+    也可能在 CI、GitHub Actions 或其他脚本目录下被调用。
+    因此按以下顺序尝试：
+    1. 用户显式传入的绝对路径或当前可直接访问的路径
+    2. 项目根目录下的同名相对路径
+    3. `scripts` 目录的上级目录（也就是项目根目录）下的 `data/football_data.json`
+    """
+
+    configured = Path(configured_path)
+    project_root = Path(__file__).resolve().parent.parent
+
+    candidate_paths = [
+        configured,
+        project_root / configured_path,
+        project_root / "data" / "football_data.json",
+    ]
+
+    for candidate in candidate_paths:
+        if candidate.exists() and candidate.is_file():
+            return candidate
+
+    # 如果都不存在，仍然返回一个更合理的默认候选路径，便于后续打印真实位置。
+    return project_root / configured_path
+
+
+def normalize_football_data(raw_data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    """将抓取脚本输出的数据结构转换成情报生成脚本期望的统一结构。
+
+    之前情报脚本固定读取 `matches` 字段，但抓取脚本实际输出的是：
+    - `today_matches`
+    - `upcoming_matches`
+    - `all_matches`
+
+    这会导致 AI 提示词里比赛信息为空，模型自然只能输出“暂无更新”。
+    这里做一次统一归一化，让下游逻辑始终使用同一套键名。
+    """
+
+    if not raw_data:
+        return {
+            "matches": [],
+            "team_status": [],
+            "injuries": [],
+            "recent_results": [],
+        }
+
+    today_matches = raw_data.get("today_matches", [])
+    upcoming_matches = raw_data.get("upcoming_matches", [])
+    all_matches = raw_data.get("all_matches", [])
+
+    # 优先把“今天 + 近期”的比赛作为情报来源，这比直接塞全部赛程更贴近
+    # “每日情报”的用途，也能避免提示词被过长的全量赛程稀释。
+    normalized_matches = []
+    if today_matches:
+        normalized_matches.extend(today_matches)
+    if upcoming_matches:
+        normalized_matches.extend(upcoming_matches[:6])
+    if not normalized_matches and all_matches:
+        normalized_matches = all_matches[:10]
+
+    return {
+        "matches": normalized_matches,
+        "team_status": raw_data.get("team_status", []),
+        "injuries": raw_data.get("injuries", []),
+        "recent_results": raw_data.get("recent_results", []),
+    }
+
+
+def safe_console_print(text: Any) -> None:
+    """安全打印控制台文本，避免 Windows gbk 编码导致脚本误报失败。
+
+    文件写入始终使用 UTF-8，但控制台编码常常还是 gbk。
+    当文本中出现 `Curaçao` 这类超出 gbk 范围的字符时，
+    普通 `print()` 会抛出 `UnicodeEncodeError`。
+    这里在打印前做一次兼容性转换，无法编码的字符用 `?` 代替，
+    保证脚本逻辑继续执行，且用户仍能看到大部分输出内容。
+    """
+
+    encoding = sys.stdout.encoding or "utf-8"
+    safe_text = str(text).encode(encoding, errors="replace").decode(encoding, errors="replace")
+    print(safe_text)
 
 class IntelligenceGenerator:
     """AI情报生成器"""
@@ -17,7 +103,7 @@ class IntelligenceGenerator:
         self.api_key = api_key or os.environ.get("DEEPSEEK_API_KEY")
         
         if not self.api_key:
-            raise ValueError("❌ 未设置 DeepSeek API Key")
+            raise ValueError("[错误] 未设置 DeepSeek API Key")
         
         # 使用兼容的 OpenAI 客户端
         try:
@@ -65,7 +151,9 @@ class IntelligenceGenerator:
             
             return response
         except Exception as e:
-            print(f"❌ AI生成失败: {e}")
+            # 这里不能输出 emoji，Windows 默认 gbk 终端可能再次因编码失败，
+            # 反而把真正的 API 错误信息遮住。
+            safe_console_print(f"[错误] AI生成失败: {e}")
             return self._generate_fallback_intelligence(current_date, football_data)
     
     def _call_openai_api(self, prompt: str) -> str:
@@ -301,18 +389,26 @@ def main():
     
     football_data = None
     
-    # 检查文件是否存在
-    data_file_path = Path(football_data_file)
+    # 这里使用带回退策略的路径解析，避免脚本因执行目录不同而误判文件不存在。
+    data_file_path = resolve_data_file_path(football_data_file)
     if data_file_path.exists() and data_file_path.is_file():
         try:
             with open(data_file_path, "r", encoding="utf-8") as f:
-                football_data = json.load(f)
-            print(f"[OK] 足球数据已加载: {football_data_file}")
+                raw_football_data = json.load(f)
+            football_data = normalize_football_data(raw_football_data)
+            print(f"[OK] 足球数据已加载: {data_file_path}")
+            print(
+                "[OK] 已归一化数据: "
+                f"{len(football_data.get('matches', []))} 场比赛, "
+                f"{len(football_data.get('team_status', []))} 条球队状态, "
+                f"{len(football_data.get('injuries', []))} 条伤停, "
+                f"{len(football_data.get('recent_results', []))} 条赛果"
+            )
         except Exception as e:
             print(f"[警告] 读取足球数据文件失败: {e}")
             print("   将使用空数据进行生成")
     else:
-        print(f"[警告] 未找到足球数据文件: {football_data_file}")
+        print(f"[警告] 未找到足球数据文件: {data_file_path}")
         print("   将使用空数据进行生成")
     
     # 生成情报
@@ -328,13 +424,13 @@ def main():
         print(f"\n[OK] 情报已保存到: {output_file}")
         print(f"\n生成的情报内容:")
         print("-" * 60)
-        print(intelligence)
+        safe_console_print(intelligence)
         print("-" * 60)
         
         return intelligence
         
     except Exception as e:
-        print(f"\n[错误] 生成失败: {e}")
+        safe_console_print(f"\n[错误] 生成失败: {e}")
         return None
 
 if __name__ == "__main__":
