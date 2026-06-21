@@ -1,5 +1,8 @@
 name: 每日情报自动更新
 
+permissions:
+  contents: write
+
 on:
   # 定时执行：每天早上8点（北京时间16:00 UTC）
   schedule:
@@ -184,8 +187,9 @@ jobs:
       - name: 检查更改
         id: check_changes
         run: |
-          # 检查是否有更改
-          if git diff --quiet worldcup2026-prediction-skill/skill.md; then
+          # 这里检查工作区中文件是否发生变化。
+          # update_skill_md.py 会直接改写文件，因此使用普通 git diff 即可。
+          if git diff --quiet -- worldcup2026-prediction-skill/skill.md; then
             echo "has_changes=false" >> $GITHUB_OUTPUT
             echo "status=unchanged" >> $GITHUB_OUTPUT
             echo "ℹ️ skill.md 没有需要更新的内容"
@@ -238,16 +242,18 @@ jobs:
           git add worldcup2026-prediction-skill/skill.md
           git add data/football_data.json 2>/dev/null || true
           
-          # 检查是否有更改
-          if git diff --quiet worldcup2026-prediction-skill/skill.md; then
-            echo "ℹ️ 没有文件变化，但仍然提交以更新时间戳"
+          # 这里检查暂存区，而不是工作区。
+          # 前面已经 git add 过，如果仍然没有 staged diff，说明这次确实没有可提交内容。
+          if git diff --cached --quiet; then
+            echo "ℹ️ 没有需要提交的内容，跳过提交与推送"
+            exit 0
           fi
           
-          # 总是提交（即使没有实际变化）
-          git commit -m "auto: 更新每日情报 $(date +'%Y-%m-%d %H:%M:%S')" || echo "ℹ️ 没有需要提交的内容"
+          git commit -m "auto: 更新每日情报 $(date +'%Y-%m-%d %H:%M:%S')"
           
-          # 推送
-          git push origin main || echo "ℹ️ 推送失败（可能没有内容需要推送）"
+          # 这里不再吞掉 push 错误。
+          # 如果权限不足、分支受保护或网络异常，job 应该直接失败，便于定位问题。
+          git push origin main
           
           echo "✅ 提交并推送完成"
 
