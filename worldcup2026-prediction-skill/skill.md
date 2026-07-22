@@ -173,18 +173,18 @@
 
 > 本节由每日情报流程覆盖更新。**当本节与第四节冲突时，以本节为准**（本节更新）。
 
-**情报日期：2026-07-22**
+**情报日期：2026-07-23**
 
 ### 今日/近期比赛
 - 2026-06-11 19:00 | 墨西哥 vs 南非 [小组赛] @ MetLife Stadium
 - 2026-06-12 02:00 | 韩国 vs Czechia [小组赛] @ SoFi Stadium
-- 2026-06-12 19:00 | 加拿大 vs Bosnia-Herzegovina [小组赛] @ AT&T Stadium
+- 2026-06-12 19:00 | 加拿大 vs 波斯尼亚和黑塞哥维那 [小组赛] @ AT&T Stadium
 - 2026-06-13 01:00 | 美国 vs 巴拉圭 [小组赛] @ Hard Rock Stadium
 - 2026-06-13 19:00 | 卡塔尔 vs 瑞士 [小组赛] @ Mercedes-Benz Stadium
 - 2026-06-13 22:00 | 巴西 vs 摩洛哥 [小组赛] @ NRG Stadium
 - 2026-06-14 01:00 | 海地 vs 苏格兰 [小组赛] @ Lincoln Financial Field
 - 2026-06-14 04:00 | 澳大利亚 vs 土耳其 [小组赛] @ Lumen Field
-- 2026-06-14 17:00 | 德国 vs Curaçao [小组赛] @ Levi's Stadium
+- 2026-06-14 17:00 | 德国 vs 库拉索 [小组赛] @ Levi's Stadium
 - 2026-06-14 20:00 | 荷兰 vs 日本 [小组赛] @ Arrowhead Stadium
 
 ### 球队状态更新
